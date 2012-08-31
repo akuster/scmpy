@@ -1,0 +1,175 @@
+#!/usr/bin/env python
+#
+#  This script is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License version 2 as
+#  published by the Free Software Foundation.
+#
+
+import sys
+import os
+import glob
+from optparse import OptionParser
+sys.path.insert(0, os.path.join(os.environ['HOME'],'lib','python2.7','site-packages'))
+from Scmpy import * 
+
+# parser
+#
+def main():
+    bugnumber = 0
+    prefix = None
+    modulename = os.curdir
+    tag = None
+    tob = None
+    ref = None
+    version = None
+    catagory = None
+    repository = None 
+    Type = None
+
+    usage = "usage: %prog [options] "
+    parser = OptionParser(usage)
+
+    parser.add_option("-a", "--application", action="store_true",
+        dest="application", help="Userland sources")
+    parser.add_option("-b", "--bug",
+        dest="bug", help="Bug number ")
+    parser.add_option("-k", "--kernel", action="store_true",
+        dest="kernel", help="Kernel sources")
+    parser.add_option("-l", "--list", action="store_true",
+        dest="list", help="list dict")
+    parser.add_option("-m", "--module",
+        dest="module", help="Module name")
+    parser.add_option("-p", "--prefix",
+        dest="prefix", help="Directory prefix name")
+    parser.add_option("-r", "--reference",
+        dest="ref", help="Reference used in list")
+    parser.add_option("-t", "--toolchain", action="store_true",
+        dest="toolchain", help="Tool chain sources")
+    parser.add_option("-v", "--reference_version", 
+        dest="version", help="Reference version")
+
+    parser.add_option("-R", "--repo",
+        dest="repository", help="Repository name")
+    parser.add_option("-T", "--topObranch", action="store_true",
+        dest="tob", help="Top of branch")
+    parser.add_option("-U", "--UserId",
+        dest="userid", help="User id")
+    parser.add_option("--version",action="store_true",
+        dest="Version", help="Program version")
+    parser.add_option("-z", "--type", dest="Type", help="Define type")
+
+# standard optionstion
+    parser.add_option("-D", "--debug", action="count",
+        dest="debug", help="Enable debug")
+    parser.add_option("-V", "--verbose", action="store_true",
+        dest="verbose", help="Enable verbosity")
+
+    (options, args) = parser.parse_args()
+    
+
+# args processing
+
+    if options.prefix:
+        prefix = options.prefix
+
+    if options.bug:
+        bugnumber = options.bug
+
+    if options.module:
+        modulename = options.module
+    
+    if options.ref:
+        ref = options.ref
+
+    if options.version:
+        version = options.version
+
+    if options.repository:
+        repository = options.repository
+
+# options processing
+    if options.Type and \
+    (options.kernel or options.application or options.toolchain):
+        parser.error("options -type and [ -a,-k, -t ] are mutually exclusive")
+
+    if (options.kernel and ( options.application or options.toolchain)) or \
+        (options.toolchain and  options.application ) :
+        parser.error("options  -a,-k, -t  are mutually exclusive")
+
+    if options.Type:
+        catagory = options.Type
+    if options.kernel:
+        catagory = "kernel"
+    if options.application:
+        catagory = "application"
+    if options.toolchain:
+        catagory = "toolchain"
+
+    if options.Version:
+        print "Version:(%s)" % ScampiVersion()
+        sys.exit(1)
+
+    if options.list:
+        listAll(repository, ref, version, catagory)
+        sys.exit()
+
+    try:
+        scm  = scm_init(repository, ref, version, catagory)
+    except:
+        sys.exit(1)
+
+#
+# run main progs
+#
+    if not repository:
+        try:
+            scm.scmRef = scm.findScmRef()
+        except KeyError:
+            print "issue with findScm"
+            sys.exit(1)
+
+    if options.verbose:
+        scm.verbose = 1
+
+    if options.debug:
+        scm.debug = options.debug
+
+    path = scm.path()
+
+    if options.tob:
+        tag = scm.topObranch()
+    else:
+        tag = scm.branch()
+
+    if options.userid:
+        userid = options.userid
+    else:
+        userid = scm.GetUserid()
+
+    try:
+        ret = scm.login(path, tag, userid)
+    except:
+        pass
+
+    try:
+        command = scm.cmdCreate("clone",tag, modulename, path, prefix, bugnumber, userid)
+        ret = scm.cmd(command['ScmOpts'],command['cmd'], command['cmdOpts'])
+    except KeyboardInterrupt:
+        print "User stopped process"
+    except:
+        raise
+
+
+#
+# main entry point
+#
+if __name__ == "__main__":
+    try:
+        ret = main()
+        sys.exit(ret)
+    except KeyboardInterrupt:
+        print "User stopped process"
+    except:
+        raise
+
+

@@ -1,0 +1,14 @@
+# ref, version, type, root, branch
+# type: kernel/application/toolchain
+
+[KOgit]
+linus, 2.6, kernel,torvalds/linux-2.6.git
+history, 2.6, kernel,tglx,history.git
+
+[git]
+u-boot, 1.0, firmware, www.denx.de/git/u-boot.git
+
+[svn]
+python, latest , toolchain, http://svn.python.org/projects/python,trunk
+qemu, latest, application, svn://svn.sv.gnu.org/qemu
+

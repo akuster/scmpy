@@ -1,0 +1,10 @@
+[git]
+scm: git
+data: public.dat
+cmdfmt: %s %s
+
+[KOgit]
+scm: git
+data: public.dat
+cmdfmt: %s %s
+root:git.kernel.org/pub/scm/linux/kernel/git
